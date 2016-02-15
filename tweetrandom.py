@@ -9,7 +9,7 @@ fullpath = os.path.dirname(os.path.realpath(__file__))
 
 config = yaml.load(open(fullpath + "/config.yaml"))
 
-tweetfile = open("/home/pom/tweetswithimgs.csv")
+tweetfile = open(fullpath + "/tweetswithimgs.csv")
 tweetreader = csv.reader(tweetfile)
 tweetlist = list(tweetreader)
 
