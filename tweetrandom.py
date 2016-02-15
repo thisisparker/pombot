@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
-import csv, random, yaml, requests
+import csv, random, yaml, requests, os
 from io import BytesIO
 from twython import Twython
 from PIL import Image
 
-config = yaml.load(open("/home/pom/config.yaml"))
+fullpath = os.path.dirname(os.path.realpath(__file__))
+
+config = yaml.load(open(fullpath + "/config.yaml"))
 
 tweetfile = open("/home/pom/tweetswithimgs.csv")
 tweetreader = csv.reader(tweetfile)
