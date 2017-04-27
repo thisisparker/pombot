@@ -46,19 +46,16 @@ image_io = BytesIO()
 
 bg.save(image_io,format='jpeg')
 
-# Current bug in upstream Mastodon.py requires uploading a file object.
-# TODO remove this temp.jpeg file once that's updated
-
-bg.save('temp.jpeg',format='jpeg')
+# Twitter upload, tweet
 
 image_io.seek(0)
-
-# Twitter upload, tweet
 
 response = twitter.upload_media(media=image_io)
 twitter.update_status(status=atweet[0], media_ids=[response['media_id']])
 
 # Mastodon upload, toot
 
-mast_media = mastodon.media_post('temp.jpeg')
-mastodon.status_post(status=atweet[0],media_ids=[mast_media['id']])
+image_io.seek(0)
+
+mast_media = mastodon.media_post(image_io, mime_type='image/jpeg')
+mastodon.status_post(status=atweet[0], media_ids=[mast_media['id']])
