@@ -9,7 +9,7 @@ from PIL import Image
 fullpath = os.path.dirname(os.path.realpath(__file__))
 
 with open(os.path.join(fullpath, "config.yaml")) as f:
-    config = yaml.load(f)
+    config = yaml.safe_load(f)
 
 with open(os.path.join(fullpath, "tweetswithimgs.csv")) as f:
     tweetreader = csv.reader(f)
