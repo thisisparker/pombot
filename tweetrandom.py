@@ -30,7 +30,9 @@ mastodon = Mastodon(client_id = mastodon_client_id, client_secret = mastodon_cli
 
 atweet = random.choice(tweetlist)
 
-res = requests.get(atweet[1])
+useragent = config['user_agent']
+
+res = requests.get(atweet[1], headers={'User-Agent':useragent})
 photo = Image.open(BytesIO(res.content))
 
 wc_width, wc_height = photo.size
