@@ -55,8 +55,12 @@ def main():
     mastodon_client_id = config['mastodon_client_id']
     mastodon_client_secret = config['mastodon_client_secret']
     mastodon_token = config['mastodon_token']
+    mastodon_url = config['mastodon_url']
 
-    mastodon = Mastodon(client_id = mastodon_client_id, client_secret = mastodon_client_secret, access_token = mastodon_token, api_base_url = 'https://botsin.space')
+    mastodon = Mastodon(client_id=mastodon_client_id,
+                        client_secret=mastodon_client_secret,
+                        access_token=mastodon_token,
+                        api_base_url=mastodon_url)
 
     image_io.seek(0)
 
