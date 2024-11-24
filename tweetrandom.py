@@ -2,13 +2,11 @@
 
 import csv, random, yaml, requests, os
 from io import BytesIO
+import atproto
 from mastodon import Mastodon
 from PIL import Image
 
-from datetime import datetime, timezone
-
 fullpath = os.path.dirname(os.path.realpath(__file__))
-BLUESKY_BASE_URL = "https://bsky.social/xrpc"
 
 with open(os.path.join(fullpath, "config.yaml")) as f:
     config = yaml.safe_load(f)
@@ -23,17 +21,8 @@ mastodon_token = config['mastodon_token']
 
 mastodon = Mastodon(client_id = mastodon_client_id, client_secret = mastodon_client_secret, access_token = mastodon_token, api_base_url = 'https://botsin.space')
 
-def authenticate_bluesky():
-    resp = requests.post(
-        BLUESKY_BASE_URL + "/com.atproto.server.createSession",
-        json={"identifier": config['bluesky_username'], "password": config['bluesky_password']},
-    )
-    resp_data = resp.json()
-    jwt = resp_data["accessJwt"]
-    did = resp_data["did"]
-    return jwt, did
-
-(bsky_jwt, bsky_did) = authenticate_bluesky()
+bsky_client = atproto.Client()
+bsky_client.login(config['bluesky_username'], config['bluesky_password'])
 
 atweet = random.choice(tweetlist)
 
@@ -62,37 +51,8 @@ image_io.seek(0)
 mast_media = mastodon.media_post(image_io, mime_type='image/jpeg')
 mastodon.status_post(status=atweet[0], media_ids=[mast_media['id']])
 
-# Bluesky upload, skeet
+# Bluesky skeet
 
 image_io.seek(0)
 
-headers = {"Authorization": "Bearer " + bsky_jwt}
-
-bsky_media_resp = requests.post(
-        BLUESKY_BASE_URL + "/com.atproto.repo.uploadBlob",
-        data=image_io,
-        headers={**headers, "Content-Type": "image/jpg"})
-
-img_blob = bsky_media_resp.json().get("blob")
-
-iso_timestamp = datetime.now(timezone.utc).isoformat()
-iso_timestamp = (
-    iso_timestamp[:-6] + 'Z'
-)
-
-post_data = {
-    "repo": bsky_did,
-    "collection": "app.bsky.feed.post",
-    "record": {
-        "$type": "app.bsky.feed.post",
-        "text": atweet[0],
-        "createdAt": iso_timestamp,
-        "embed": {"$type": "app.bsky.embed.images", "images":
-            [{"image": img_blob,
-              "alt":atweet[0]}]},
-    }
-}
-
-resp = requests.post(BLUESKY_BASE_URL + "/com.atproto.repo.createRecord",
-                        json=post_data,
-                        headers=headers)
+bsky_client.send_image(text=atweet[0], image=image_io, image_alt=atweet[0])
