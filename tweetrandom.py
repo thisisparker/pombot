@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 
-import csv, random, yaml, requests, os
-from io import BytesIO
+import csv
+import random
+import os
+
 import atproto
+import requests
+import yaml
+
+from io import BytesIO
+
 from mastodon import Mastodon
 from PIL import Image
+
 
 fullpath = os.path.dirname(os.path.realpath(__file__))
 
@@ -15,44 +23,54 @@ with open(os.path.join(fullpath, "tweetswithimgs.csv")) as f:
     tweetreader = csv.reader(f)
     tweetlist = list(tweetreader)
 
-mastodon_client_id = config['mastodon_client_id']
-mastodon_client_secret = config['mastodon_client_secret']
-mastodon_token = config['mastodon_token']
+def add_background(img):
+    wc_width, wc_height = img.size
+    long_edge = int(1.1 * max(wc_width, wc_height))
 
-mastodon = Mastodon(client_id = mastodon_client_id, client_secret = mastodon_client_secret, access_token = mastodon_token, api_base_url = 'https://botsin.space')
+    paste_x = int(long_edge/2 - wc_width/2)
+    paste_y = int(long_edge/2 - wc_height/2)
 
-bsky_client = atproto.Client()
-bsky_client.login(config['bluesky_username'], config['bluesky_password'])
+    bg = Image.new('RGB', (long_edge, long_edge), (255, 252, 233))
+    bg.paste(img, (paste_x, paste_y))
 
-atweet = random.choice(tweetlist)
+    image_io = BytesIO()
 
-useragent = config['user_agent']
+    bg.save(image_io, format='jpeg')
 
-res = requests.get(atweet[1], headers={'User-Agent':useragent})
-photo = Image.open(BytesIO(res.content))
+    return image_io
 
-wc_width, wc_height = photo.size
-long_edge = int(1.1 * max(wc_width,wc_height))
 
-paste_x = int(long_edge/2 - wc_width/2)
-paste_y = int(long_edge/2 - wc_height/2)
+def main():
+    atweet = random.choice(tweetlist)
 
-bg = Image.new('RGB',(long_edge,long_edge),(255, 252, 233))
-bg.paste(photo,(paste_x, paste_y))
+    useragent = config['user_agent']
 
-image_io = BytesIO()
+    res = requests.get(atweet[1], headers={'User-Agent': useragent})
+    photo = Image.open(BytesIO(res.content))
 
-bg.save(image_io,format='jpeg')
+    image_io = add_background(photo)
 
-# Mastodon upload, toot
+    # Mastodon upload, toot
 
-image_io.seek(0)
+    mastodon_client_id = config['mastodon_client_id']
+    mastodon_client_secret = config['mastodon_client_secret']
+    mastodon_token = config['mastodon_token']
 
-mast_media = mastodon.media_post(image_io, mime_type='image/jpeg')
-mastodon.status_post(status=atweet[0], media_ids=[mast_media['id']])
+    mastodon = Mastodon(client_id = mastodon_client_id, client_secret = mastodon_client_secret, access_token = mastodon_token, api_base_url = 'https://botsin.space')
 
-# Bluesky skeet
+    image_io.seek(0)
 
-image_io.seek(0)
+    mast_media = mastodon.media_post(image_io, mime_type='image/jpeg')
+    mastodon.status_post(status=atweet[0], media_ids=[mast_media['id']])
 
-bsky_client.send_image(text=atweet[0], image=image_io, image_alt=atweet[0])
+    # Bluesky skeet
+
+    bsky_client = atproto.Client()
+    bsky_client.login(config['bluesky_username'], config['bluesky_password'])
+
+    image_io.seek(0)
+
+    bsky_client.send_image(text=atweet[0], image=image_io, image_alt=atweet[0])
+
+if __name__ == '__main__':
+    main()
