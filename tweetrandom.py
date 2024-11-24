@@ -3,7 +3,6 @@
 import csv, random, yaml, requests, os
 from io import BytesIO
 from mastodon import Mastodon
-from twython import Twython
 from PIL import Image
 
 from datetime import datetime, timezone
@@ -17,13 +16,6 @@ with open(os.path.join(fullpath, "config.yaml")) as f:
 with open(os.path.join(fullpath, "tweetswithimgs.csv")) as f:
     tweetreader = csv.reader(f)
     tweetlist = list(tweetreader)
-
-twitter_app_key = config['twitter_app_key']
-twitter_app_secret = config['twitter_app_secret']
-twitter_oauth_token = config['twitter_oauth_token']
-twitter_oauth_token_secret = config['twitter_oauth_token_secret']
-
-twitter = Twython(twitter_app_key, twitter_app_secret, twitter_oauth_token, twitter_oauth_token_secret)
 
 mastodon_client_id = config['mastodon_client_id']
 mastodon_client_secret = config['mastodon_client_secret']
@@ -62,13 +54,6 @@ bg.paste(photo,(paste_x, paste_y))
 image_io = BytesIO()
 
 bg.save(image_io,format='jpeg')
-
-# Twitter upload, tweet
-
-image_io.seek(0)
-
-response = twitter.upload_media(media=image_io)
-twitter.update_status(status=atweet[0], media_ids=[response['media_id']])
 
 # Mastodon upload, toot
 
